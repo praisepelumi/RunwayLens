@@ -390,11 +390,11 @@ export default function LoginPage() {
       <div className="relative z-10 flex flex-1 flex-col">
         {/* Nav */}
         <nav className="flex items-center justify-between px-6 py-5 sm:px-12">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.08] backdrop-blur-sm ring-1 ring-white/[0.08]">
-              <Telescope className="h-4.5 w-4.5 text-[#5ba3d9]" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.08] backdrop-blur-sm ring-1 ring-white/[0.08]">
+              <Telescope className="h-5 w-5 text-[#5ba3d9]" />
             </div>
-            <span className="font-display text-xl tracking-tight text-white">
+            <span className="font-display text-2xl font-semibold tracking-tight text-white">
               RunwayLens
             </span>
           </div>
