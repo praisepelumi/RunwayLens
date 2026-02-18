@@ -87,7 +87,7 @@ export default function LoginPage() {
           </div>
           <h1 className="font-display text-3xl tracking-tight">RunwayLens</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Cash flow forecasting for small businesses
+            Cash flow forecasting for startups
           </p>
         </div>
 
