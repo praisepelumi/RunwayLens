@@ -425,8 +425,14 @@ export default function LoginPage() {
           {/* Headline */}
           <h1 className="max-w-3xl text-center font-display text-5xl leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl">
             Know your{' '}
-            <span className="bg-gradient-to-r from-[#5ba3d9] via-[#3b9b74] to-[#5ba3d9] bg-clip-text text-transparent">
-              runway
+            <span className="runway-word">
+              <span className="bg-gradient-to-r from-[#5ba3d9] via-[#3b9b74] to-[#5ba3d9] bg-clip-text text-transparent">
+                runway
+              </span>
+              <span className="runway-strip">
+                <span className="runway-dashes" />
+              </span>
+              <span className="runway-plane">✈</span>
             </span>
             <br />
             before it ends

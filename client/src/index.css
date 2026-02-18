@@ -113,3 +113,77 @@
     background: var(--color-muted-foreground);
   }
 }
+
+/* ── Runway plane animation ─────────────────────── */
+@keyframes planeTakeoff {
+  0% {
+    left: -10%;
+    opacity: 0;
+    transform: translateY(0) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    left: 105%;
+    opacity: 0;
+    transform: translateY(-12px) rotate(-8deg);
+  }
+}
+
+@keyframes dashScroll {
+  0% { background-position: 0 0; }
+  100% { background-position: -24px 0; }
+}
+
+@keyframes runwayFadeIn {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+.runway-word {
+  position: relative;
+  display: inline-block;
+}
+
+.runway-strip {
+  position: absolute;
+  bottom: -4px;
+  left: -4%;
+  width: 108%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(91,163,217,0.3) 15%, rgba(91,163,217,0.3) 85%, transparent 100%);
+  transform-origin: left center;
+  animation: runwayFadeIn 0.8s ease-out 0.5s both;
+}
+
+.runway-dashes {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  transform: translateY(-50%);
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.5) 0px,
+    rgba(255,255,255,0.5) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  background-size: 24px 2px;
+  animation: dashScroll 0.8s linear infinite, runwayFadeIn 0.8s ease-out 0.7s both;
+}
+
+.runway-plane {
+  position: absolute;
+  bottom: -2px;
+  font-size: 16px;
+  line-height: 1;
+  animation: planeTakeoff 3s ease-in-out 1.2s both;
+  filter: drop-shadow(0 0 6px rgba(91,163,217,0.5));
+}
