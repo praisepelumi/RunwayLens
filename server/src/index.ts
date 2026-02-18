@@ -59,7 +59,7 @@ async function start() {
   console.log(`\n🚀 RunwayLens API running at http://localhost:${port}`);
   console.log(`   tRPC endpoint: http://localhost:${port}/trpc\n`);
 
-  serve({ fetch: app.fetch, port });
+  serve({ fetch: app.fetch, port, hostname: '0.0.0.0' });
 }
 
 start().catch((err) => {
