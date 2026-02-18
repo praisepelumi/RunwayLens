@@ -15,6 +15,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # ── Build client (Vite) ──
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN pnpm --filter client build
 
 # ── Move client dist to server/public for static serving ──
