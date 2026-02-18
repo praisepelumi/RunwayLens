@@ -24,6 +24,6 @@ RUN mkdir -p server/public && cp -r client/dist/* server/public/
 
 # ── Production ──
 ENV NODE_ENV=production
-EXPOSE 3001
+EXPOSE 8080
 
 CMD ["pnpm", "--filter", "server", "start"]
