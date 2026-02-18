@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import {
   Telescope,
@@ -59,6 +59,267 @@ const features = [
     description: 'Automated warnings before burn rate spirals or reserves dip.',
   },
 ];
+
+// ── Animated runway chart SVG ──────────────────────────────────────
+// Shows three scenario lines (optimistic, expected, pessimistic) that
+// draw themselves on mount, with a pulsing "danger zone" at the bottom.
+
+const CHART_W = 600;
+const CHART_H = 200;
+const MONTHS = 12;
+const PADDING = { top: 20, right: 20, bottom: 30, left: 50 };
+
+const scenarioData = {
+  optimistic: [500, 480, 470, 465, 468, 475, 490, 510, 535, 565, 600, 640],
+  expected:   [500, 460, 420, 385, 355, 320, 290, 255, 220, 180, 140, 95],
+  pessimistic:[500, 440, 375, 310, 250, 190, 130, 75,  30, -10, -40, -65],
+};
+
+const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function toSvgX(i: number) {
+  const plotW = CHART_W - PADDING.left - PADDING.right;
+  return PADDING.left + (i / (MONTHS - 1)) * plotW;
+}
+
+function toSvgY(val: number) {
+  const minVal = -100;
+  const maxVal = 700;
+  const plotH = CHART_H - PADDING.top - PADDING.bottom;
+  return PADDING.top + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
+}
+
+function buildPath(data: number[]) {
+  return data
+    .map((v, i) => `${i === 0 ? 'M' : 'L'}${toSvgX(i).toFixed(1)},${toSvgY(v).toFixed(1)}`)
+    .join(' ');
+}
+
+function buildAreaPath(data: number[]) {
+  const line = data
+    .map((v, i) => `${i === 0 ? 'M' : 'L'}${toSvgX(i).toFixed(1)},${toSvgY(v).toFixed(1)}`)
+    .join(' ');
+  const bottom = toSvgY(-100);
+  return `${line} L${toSvgX(data.length - 1).toFixed(1)},${bottom} L${toSvgX(0).toFixed(1)},${bottom} Z`;
+}
+
+function RunwayChart() {
+  const [visible, setVisible] = useState(false);
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.2 }
+    );
+    if (chartRef.current) observer.observe(chartRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const zeroY = toSvgY(0);
+
+  const scenarios = [
+    { key: 'pessimistic', data: scenarioData.pessimistic, color: '#ef4444', label: 'Pessimistic' },
+    { key: 'expected',    data: scenarioData.expected,    color: '#5ba3d9', label: 'Expected' },
+    { key: 'optimistic',  data: scenarioData.optimistic,  color: '#22c55e', label: 'Optimistic' },
+  ];
+
+  return (
+    <div ref={chartRef} className="relative mx-auto mt-14 w-full max-w-2xl">
+      {/* Glow behind chart */}
+      <div className="absolute inset-0 -m-8 rounded-3xl bg-[#5ba3d9]/[0.04] blur-2xl" />
+
+      <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-sm">
+        {/* Chart header */}
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-widest text-white/30">
+              Cash Projection
+            </p>
+            <p className="mt-0.5 font-mono text-lg font-semibold text-white/80">
+              $500,000
+              <span className="ml-2 text-xs font-normal text-white/30">starting balance</span>
+            </p>
+          </div>
+          {/* Legend */}
+          <div className="flex gap-4">
+            {scenarios.map((s) => (
+              <div key={s.key} className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="text-[10px] text-white/40">{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SVG Chart */}
+        <svg
+          viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+          className="w-full"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <defs>
+            {/* Gradient for danger zone */}
+            <linearGradient id="dangerZone" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+            </linearGradient>
+            {/* Area fills */}
+            <linearGradient id="areaOptimistic" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22c55e" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="areaExpected" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#5ba3d9" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="#5ba3d9" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          {[0, 175, 350, 525, 700].map((val) => (
+            <g key={val}>
+              <line
+                x1={PADDING.left}
+                y1={toSvgY(val)}
+                x2={CHART_W - PADDING.right}
+                y2={toSvgY(val)}
+                stroke="white"
+                strokeOpacity={val === 0 ? 0.15 : 0.05}
+                strokeDasharray={val === 0 ? 'none' : '4 4'}
+              />
+              <text
+                x={PADDING.left - 8}
+                y={toSvgY(val) + 3}
+                textAnchor="end"
+                className="fill-white/20 text-[9px]"
+                fontFamily="JetBrains Mono, monospace"
+              >
+                {val === 0 ? '$0' : `$${val}k`}
+              </text>
+            </g>
+          ))}
+
+          {/* Month labels */}
+          {monthLabels.map((label, i) => (
+            <text
+              key={label}
+              x={toSvgX(i)}
+              y={CHART_H - 8}
+              textAnchor="middle"
+              className="fill-white/20 text-[9px]"
+              fontFamily="JetBrains Mono, monospace"
+            >
+              {label}
+            </text>
+          ))}
+
+          {/* Danger zone below $0 */}
+          <rect
+            x={PADDING.left}
+            y={zeroY}
+            width={CHART_W - PADDING.left - PADDING.right}
+            height={CHART_H - PADDING.bottom - zeroY}
+            fill="url(#dangerZone)"
+          />
+
+          {/* Area fills */}
+          <path
+            d={buildAreaPath(scenarioData.optimistic)}
+            fill="url(#areaOptimistic)"
+            className={`transition-opacity duration-1000 ${visible ? 'opacity-100' : 'opacity-0'}`}
+          />
+          <path
+            d={buildAreaPath(scenarioData.expected)}
+            fill="url(#areaExpected)"
+            className={`transition-opacity duration-1000 ${visible ? 'opacity-100' : 'opacity-0'}`}
+          />
+
+          {/* Scenario lines */}
+          {scenarios.map((s) => {
+            const path = buildPath(s.data);
+            return (
+              <g key={s.key}>
+                {/* Glow */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth="6"
+                  strokeOpacity="0.15"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`${visible ? 'animate-draw' : ''}`}
+                  style={{
+                    strokeDasharray: 1200,
+                    strokeDashoffset: visible ? 0 : 1200,
+                    transition: 'stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
+                {/* Line */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    strokeDasharray: 1200,
+                    strokeDashoffset: visible ? 0 : 1200,
+                    transition: 'stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
+                {/* End dot */}
+                <circle
+                  cx={toSvgX(11)}
+                  cy={toSvgY(s.data[11])}
+                  r="4"
+                  fill={s.color}
+                  className={`transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}
+                  style={{ transitionDelay: '2s' }}
+                />
+                {/* End label */}
+                <text
+                  x={toSvgX(11) + 8}
+                  y={toSvgY(s.data[11]) + 3}
+                  className={`fill-white/50 text-[9px] transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}
+                  fontFamily="JetBrains Mono, monospace"
+                  style={{ transitionDelay: '2.2s' }}
+                >
+                  {s.data[11] >= 0 ? `$${s.data[11]}k` : `-$${Math.abs(s.data[11])}k`}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Runway marker — where expected crosses $0 */}
+          {(() => {
+            // Find the month where expected crosses zero (between month 11 and 12 based on data)
+            const data = scenarioData.expected;
+            for (let i = 1; i < data.length; i++) {
+              if (data[i] <= 0) {
+                const ratio = data[i - 1] / (data[i - 1] - data[i]);
+                const crossX = toSvgX(i - 1 + ratio);
+                return (
+                  <g className={`transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: '2.4s' }}>
+                    <line x1={crossX} y1={zeroY - 20} x2={crossX} y2={zeroY + 10} stroke="#ef4444" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.6" />
+                    <rect x={crossX - 32} y={zeroY - 34} width="64" height="18" rx="4" fill="#ef4444" fillOpacity="0.15" stroke="#ef4444" strokeOpacity="0.3" strokeWidth="0.5" />
+                    <text x={crossX} y={zeroY - 22} textAnchor="middle" className="text-[8px] font-semibold" fill="#ef4444" fontFamily="JetBrains Mono, monospace">
+                      RUNWAY END
+                    </text>
+                  </g>
+                );
+              }
+            }
+            return null;
+          })()}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Login Page ────────────────────────────────────────────────
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -149,7 +410,7 @@ export default function LoginPage() {
         </nav>
 
         {/* Hero */}
-        <main className="flex flex-1 flex-col items-center justify-center px-6 py-16 sm:py-24">
+        <main className="flex flex-1 flex-col items-center px-6 pt-12 sm:pt-20">
           {/* Badge */}
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-1.5 backdrop-blur-sm">
             <span className="relative flex h-2 w-2">
@@ -185,6 +446,9 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Animated Runway Chart */}
+          <RunwayChart />
+
           {/* Feature Grid */}
           <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
             {features.map((feature) => {
@@ -209,7 +473,7 @@ export default function LoginPage() {
           </div>
 
           {/* Metrics bar */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+          <div className="mt-16 mb-20 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
             {[
               { value: '12mo', label: 'Forecast Range' },
               { value: '3', label: 'Default Scenarios' },
