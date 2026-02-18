@@ -2,6 +2,8 @@
 
 A cash flow forecasting tool for startups. Input your income and expenses, and instantly see your cash runway, burn rate, and financial health across multiple scenarios.
 
+**Live demo:** [runwaylens-production.up.railway.app](https://runwaylens-production.up.railway.app)
+
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React_18-61DAFB?logo=react&logoColor=black)
 ![Hono](https://img.shields.io/badge/Hono-E36002?logo=hono&logoColor=white)
@@ -65,8 +67,8 @@ cashflow-forecaster/
 1. **Clone the repo**
 
    ```bash
-   git clone https://github.com/yourusername/cashflow-forecaster.git
-   cd cashflow-forecaster
+   git clone https://github.com/praisepelumi/RunwayLens.git
+   cd RunwayLens
    ```
 
 2. **Install dependencies**
