@@ -45,9 +45,16 @@ app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOStri
 
 // In production, serve the built client
 if (process.env.NODE_ENV === 'production') {
+  // Serve static assets (JS, CSS, images, etc.)
   app.use('/*', serveStatic({ root: './public' }));
-  // SPA fallback: serve index.html for non-API routes
-  app.get('*', serveStatic({ root: './public', path: 'index.html' }));
+
+  // SPA fallback: serve index.html for any unmatched route
+  app.notFound(async (c) => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+    const html = await fs.readFile(path.resolve('./public/index.html'), 'utf-8');
+    return c.html(html);
+  });
 }
 
 const port = parseInt(process.env.PORT || '3001', 10);
