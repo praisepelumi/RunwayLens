@@ -1,0 +1,24 @@
+{
+  "name": "cashflow-forecaster",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names server,client --prefix-colors blue,green \"pnpm dev:server\" \"pnpm dev:client\"",
+    "dev:server": "pnpm --filter server dev",
+    "dev:client": "pnpm --filter client dev",
+    "build": "pnpm --filter client build",
+    "start": "NODE_ENV=production pnpm --filter server start",
+    "test": "vitest",
+    "test:server": "pnpm --filter server test",
+    "test:client": "pnpm --filter client test",
+    "test:shared": "pnpm --filter @cashflow/shared test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --import ./src/env.ts src/index.ts",
+    "start": "tsx --import ./src/env.ts src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@cashflow/shared": "workspace:*",
+    "@hono/node-server": "^1.14.1",
+    "@trpc/server": "^11.0.0",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.39.3",
+    "google-auth-library": "^9.15.1",
+    "hono": "^4.7.5",
+    "postgres": "^3.4.5",
+    "superjson": "^2.2.2",
+    "tsx": "^4.19.3",
+    "ulid": "^2.3.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "drizzle-kit": "^0.30.5",
+    "typescript": "^5.7.3"
+  }
+}
