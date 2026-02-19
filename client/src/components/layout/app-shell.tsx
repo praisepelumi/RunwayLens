@@ -13,11 +13,15 @@ export function AppShell() {
       <div
         className={cn(
           'flex flex-1 flex-col transition-all duration-300',
-          sidebarOpen ? 'ml-64' : 'ml-16'
+          // Mobile: no left margin (sidebar is an overlay)
+          // Desktop: margin shifts based on sidebar width
+          'ml-0 md:ml-16',
+          sidebarOpen && 'md:ml-64'
         )}
       >
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* pt-16 on mobile to account for the fixed hamburger button */}
+        <main className="flex-1 overflow-y-auto p-4 pt-16 md:p-6 md:pt-6">
           <Outlet />
         </main>
       </div>

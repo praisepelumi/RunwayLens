@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 
+function isMobile() {
+  return typeof window !== 'undefined' && window.innerWidth < 768;
+}
+
 interface UIState {
   sidebarOpen: boolean;
   activeScenarioIds: string[];
@@ -11,7 +15,8 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  sidebarOpen: true,
+  // Sidebar starts closed on mobile, open on desktop
+  sidebarOpen: !isMobile(),
   activeScenarioIds: [],
   theme: (typeof window !== 'undefined' && localStorage.getItem('theme') as 'light' | 'dark') || 'light',
 
