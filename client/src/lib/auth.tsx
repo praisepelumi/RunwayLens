@@ -53,8 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await loginMutation.mutateAsync({ idToken });
     localStorage.setItem(SESSION_KEY, result.sessionToken);
     setUser(result.user);
-    // Force refetch for all queries now that we're authenticated
-    window.location.reload();
+    setIsLoading(false);
+    // Navigate to dashboard instead of reloading (fixes mobile lag)
+    window.location.href = '/';
   }, [loginMutation]);
 
   const logout = useCallback(() => {
