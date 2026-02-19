@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const loginMutation = trpc.auth.googleLogin.useMutation();
+  const utils = trpc.useUtils();
   const meQuery = trpc.auth.me.useQuery(undefined, {
     enabled: !!getSessionToken(),
     retry: false,
@@ -54,9 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(SESSION_KEY, result.sessionToken);
     setUser(result.user);
     setIsLoading(false);
-    // Navigate to dashboard instead of reloading (fixes mobile lag)
-    window.location.href = '/';
-  }, [loginMutation]);
+    // Invalidate all cached queries so they refetch with new auth token
+    await utils.invalidate();
+  }, [loginMutation, utils]);
 
   const logout = useCallback(() => {
     localStorage.removeItem(SESSION_KEY);
