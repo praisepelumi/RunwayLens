@@ -28,14 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const loginMutation = trpc.auth.googleLogin.useMutation();
-  const utils = trpc.useUtils();
   const meQuery = trpc.auth.me.useQuery(undefined, {
-    enabled: !!getSessionToken(),
+    enabled: !!getSessionToken() && !user,
     retry: false,
   });
 
-  // Sync user from me query
+  // Sync user from me query (only on initial load / page refresh)
   useEffect(() => {
+    // Skip if user is already set (e.g. from login())
+    if (user) return;
+
     if (meQuery.isSuccess) {
       setUser(meQuery.data ?? null);
       setIsLoading(false);
@@ -48,24 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // No session token at all
       setIsLoading(false);
     }
-  }, [meQuery.isSuccess, meQuery.isError, meQuery.data]);
+  }, [meQuery.isSuccess, meQuery.isError, meQuery.data, user]);
 
   const login = useCallback(async (idToken: string) => {
-    try {
-      const result = await loginMutation.mutateAsync({ idToken });
-      localStorage.setItem(SESSION_KEY, result.sessionToken);
-      setUser(result.user);
-      setIsLoading(false);
-      // Small delay to let React re-render, then force navigate if still on login
-      setTimeout(() => {
-        if (window.location.pathname === '/login' || window.location.pathname === '/') {
-          window.location.href = '/';
-        }
-      }, 300);
-    } catch (err) {
-      console.error('Login failed:', err);
-      throw err;
-    }
+    const result = await loginMutation.mutateAsync({ idToken });
+    localStorage.setItem(SESSION_KEY, result.sessionToken);
+    // Set user in state — this triggers RedirectIfAuthed to navigate to /
+    setUser(result.user);
+    setIsLoading(false);
   }, [loginMutation]);
 
   const logout = useCallback(() => {
