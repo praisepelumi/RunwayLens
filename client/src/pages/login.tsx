@@ -325,13 +325,8 @@ export default function LoginPage() {
   const { login } = useAuth();
   const buttonRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
-
-  const handleCredentialResponse = useCallback(
-    (response: { credential: string }) => {
-      login(response.credential);
-    },
-    [login]
-  );
+  const loginRef = useRef(login);
+  loginRef.current = login;
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -342,7 +337,13 @@ export default function LoginPage() {
 
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
+        callback: (response: { credential: string }) => {
+          loginRef.current(response.credential).catch((err) => {
+            console.error('Login failed:', err);
+            // Fallback: force reload so user can try again
+            window.location.reload();
+          });
+        },
       });
 
       window.google.accounts.id.renderButton(buttonRef.current, {
@@ -365,7 +366,7 @@ export default function LoginPage() {
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [handleCredentialResponse]);
+  }, []);
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#0a0a14]">

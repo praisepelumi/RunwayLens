@@ -51,13 +51,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [meQuery.isSuccess, meQuery.isError, meQuery.data]);
 
   const login = useCallback(async (idToken: string) => {
-    const result = await loginMutation.mutateAsync({ idToken });
-    localStorage.setItem(SESSION_KEY, result.sessionToken);
-    setUser(result.user);
-    setIsLoading(false);
-    // Invalidate all cached queries so they refetch with new auth token
-    await utils.invalidate();
-  }, [loginMutation, utils]);
+    try {
+      const result = await loginMutation.mutateAsync({ idToken });
+      localStorage.setItem(SESSION_KEY, result.sessionToken);
+      setUser(result.user);
+      setIsLoading(false);
+      // Small delay to let React re-render, then force navigate if still on login
+      setTimeout(() => {
+        if (window.location.pathname === '/login' || window.location.pathname === '/') {
+          window.location.href = '/';
+        }
+      }, 300);
+    } catch (err) {
+      console.error('Login failed:', err);
+      throw err;
+    }
+  }, [loginMutation]);
 
   const logout = useCallback(() => {
     localStorage.removeItem(SESSION_KEY);
